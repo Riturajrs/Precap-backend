@@ -1,22 +1,20 @@
-Precap REST API Documentation
+# Precap REST API Documentation
 Welcome to the Precap REST API documentation. This API allows you to interact with Precap's messaging and user management features. Follow the guide below to get started.
 
-Getting Started
+## Getting Started
 To use the Precap API, make HTTP requests to the specified endpoints. Include the required parameters in the request body, headers, or query parameters as indicated for each endpoint. Some routes require authentication through a valid token.
 
-Endpoints
-New Message
-Endpoint: /newMessage
-Method: POST
-Description: Create a new message.
-Parameters:
-email (Body): Sender's email.
-Example:
-json
-Copy code
-{
-  "email": "sender@example.com"
-}
+## Endpoints
+New Message <br>
+Endpoint: /newMessage <br>
+Method: POST <br>
+Description: Create a new message. <br>
+Parameters: <br>
+email (Body): Sender's email. <br>
+Example: <br>
+```json
+"email": "sender@example.com"
+```
 Controller Method: controller.newMessage
 Create Account
 Endpoint: /createAccount
