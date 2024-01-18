@@ -71,7 +71,7 @@ const getFile = async (fileId, bucketName,res) => {
       res.status(404).send('File not found');
     });
   } catch (err) {
-    throw err
+    console.log(err)
   }
 }
 

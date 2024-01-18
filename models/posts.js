@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const schema = new Schema({
   issuerId: { type: String, required: true },
   image: { type: String, required: true },
-  links: { type: String },
+  links: [{ type: String }],
   content: { type: String, required: true },
   timestamp: { type: String, required: true },
 });

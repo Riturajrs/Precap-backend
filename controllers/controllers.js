@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs')
 const auth = require('../middleware/auth')
 const { uploadFile, deleteFile, getFile } = require('../middleware/upload')
 const Posts = require('../models/posts')
-
+const Webinar = require('../models/webinar')
 
 const newMessage = async (req, res, next) => {
   const errors = validationResult(req)
@@ -148,7 +148,8 @@ const addPosts = async (req, res, next) => {
     )
   }
 
-  const { content, links } = req.body
+  const { content } = req.body
+  let { links } = req.body
   const decodedData = res.decodedData
   if (!decodedData) {
     next(new HttpError('Precap user not found!!', 404))
@@ -228,9 +229,14 @@ const deletePosts = async (req, res, next) => {
   try {
     existingPost = await Posts.deleteOne({ _id: postId })
   } catch (err) {
-    next(new HttpError('Post could not be deleted!!', 404))
+    next(new HttpError('Post could not be deleted!!', 500))
   }
+  try{
   await deleteFile(imageId, bucketName)
+  }
+  catch(err){
+    next(new HttpError("Post's images could not be deleted!!", 500))
+  }
   res
     .status(200)
     .json({ data: `Post with id ${postId} was successfully deleted!!` })
@@ -245,9 +251,150 @@ const getFileController = async (req, res, next) => {
   }
 }
 
-exports.addPosts = addPosts
+const addWebinars = async (req, res, next) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return next(
+      new HttpError('Invalid inputs passed, please check your data.', 422)
+    )
+  }
+
+  const { description, title, speakers, reg_link, timing, deadline } = req.body
+  const decodedData = res.decodedData
+  if (!decodedData) {
+    next(new HttpError('Precap user not found!!', 404))
+  }
+
+  let existingUser
+  try {
+    existingUser = await User.findOne({ email: decodedData.email })
+  } catch (error) {
+    next(new HttpError('Precap user not found!!', 404))
+  }
+  if (!existingUser) {
+    next(new HttpError('Precap user not found!!', 404))
+  }
+
+  const bucketName_1 = 'webinar_icon_images'
+  const bucketName_2 = 'webinar_bg_images'
+  const icon_image = req.files.webinar_icon_image[0]
+  const bg_image = req.files.webinar_bg_image[0]
+
+  try {
+    const uploadStream_icon = await uploadFile(
+      (file = icon_image),
+      bucketName_1,
+      null
+    )
+    uploadStream_icon.on('finish', async () => {
+      const fileId_icon = uploadStream_icon.id.toString()
+      try {
+        const uploadStream_bg = await uploadFile(
+          (file = bg_image),
+          bucketName_2,
+          null
+        )
+        const fileId_bg = uploadStream_bg.id.toString()
+        uploadStream_bg.on('finish', async () => {
+          const timestamp = new Date().toISOString()
+          const newWebinar = new Webinar({
+            issuerId: decodedData.email,
+            icon_image: fileId_icon,
+            bg_image: fileId_bg,
+            reg_link,
+            description,
+            title,
+            speakers,
+            timing,
+            deadline,
+            timestamp
+          })
+          try {
+            await newWebinar.save()
+          } catch (err) {
+            console.log(err)
+            await deleteFile(fileId_icon, bucketName_1)
+            await deleteFile(fileId_bg, bucketName_2)
+            next(new HttpError('Webinar could not be saved', 500))
+          }
+          res.status(201).json({ data: 'New Webinar created!!' })
+        })
+        uploadStream_bg.on('error', err => {
+          throw err
+        })
+      } catch (err) {
+        await deleteFile(fileId_icon, bucketName_1)
+        next(new HttpError("Webinar's bg image could not be saved", 500))
+      }
+    })
+    uploadStream_icon.on('error', err => {
+      throw err
+    })
+  } catch (err) {
+    next(new HttpError("Webinar's icon image could not be saved", 500))
+  }
+}
+
+const deleteWebinars = async (req, res, next) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return next(
+      new HttpError('Invalid inputs passed, please check your data.', 422)
+    )
+  }
+
+  const { webinarId } = req.body
+  const decodedData = res.decodedData
+  if (!decodedData) {
+    next(new HttpError('Precap user not found!!', 404))
+  }
+
+  let existingUser
+  try {
+    existingUser = await User.findOne({ email: decodedData.email })
+  } catch (error) {
+    next(new HttpError('Precap user not found!!', 404))
+  }
+  if (!existingUser) {
+    next(new HttpError('Precap user not found!!', 404))
+  }
+
+  const bucketName_1 = 'webinar_icon_images'
+  const bucketName_2 = 'webinar_bg_images'
+  
+  let existingWebinar
+  
+  try {
+    existingWebinar = await Webinar.findOne({ _id: webinarId })
+  } catch (err) {
+    next(new HttpError('Webinar could not be found!!', 404))
+  }
+  const imageId_icon = existingWebinar.icon_image.toString()
+  const imageId_bg = existingWebinar.bg_image.toString()
+
+  try {
+    existingWebinar = await Webinar.deleteOne({ _id: webinarId })
+  } catch (err) {
+    next(new HttpError('Webinar could not be deleted!!', 500))
+  }
+  try{
+  await deleteFile(imageId_icon, bucketName_1)
+  await deleteFile(imageId_bg, bucketName_2)
+  }
+  catch(err){
+    next(new HttpError('Images in webinar could not be deleted!!', 500))
+  }
+  res
+    .status(200)
+    .json({ data: `Webinar with id ${webinarId} was successfully deleted!!` })
+
+}
+
 exports.userLogin = userLogin
 exports.createAccount = createAccount
 exports.newMessage = newMessage
+exports.addPosts = addPosts
 exports.deletePosts = deletePosts
 exports.getFile = getFileController
+exports.addWebinars = addWebinars
+exports.deleteWebinars = deleteWebinars

@@ -57,20 +57,28 @@ router.post(
 router.post(
   '/addPosts',
   verifyToken,
-  upload.single('image'),
+  upload.single('post_image'),
   controller.addPosts
 )
 
-router.delete(
-  '/deletePosts',
+router.post(
+  '/addWebinars',
   verifyToken,
-  controller.deletePosts,
+  upload.fields([
+    { name: 'webinar_bg_image', maxCount: 1 },
+    { name: 'webinar_icon_image', maxCount: 1 }
+  ]),
+  controller.addWebinars,
   (req, res, next) =>
     res
       .status(200)
       .json({ data: 'Token is valid', decodedData: req.decodedData })
 )
 
-router.get('/getFile',controller.getFile)
+router.delete('/deletePosts', verifyToken, controller.deletePosts)
+
+router.delete('/deleteWebinars', verifyToken, controller.deleteWebinars)
+
+router.get('/getFile', controller.getFile)
 
 module.exports = router
