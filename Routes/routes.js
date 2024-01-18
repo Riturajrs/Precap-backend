@@ -81,4 +81,8 @@ router.delete('/deleteWebinars', verifyToken, controller.deleteWebinars)
 
 router.get('/getFile', controller.getFile)
 
+router.get('/getPosts', controller.getPosts)
+
+router.get('/getWebinars', controller.getWebinars)
+
 module.exports = router

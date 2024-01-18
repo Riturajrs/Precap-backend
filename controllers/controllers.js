@@ -242,15 +242,6 @@ const deletePosts = async (req, res, next) => {
     .json({ data: `Post with id ${postId} was successfully deleted!!` })
 }
 
-const getFileController = async (req, res, next) => {
-  const { fileId, bucketName } = req.body
-  try {
-    await getFile(fileId, bucketName, res)
-  } catch (err) {
-    next(new HttpError('An error occurred while fetching the file', 500))
-  }
-}
-
 const addWebinars = async (req, res, next) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -390,11 +381,44 @@ const deleteWebinars = async (req, res, next) => {
 
 }
 
+const getPosts = async(req,res,next) => {
+  let allPosts
+  try{
+    allPosts = await Posts.find({})
+  }
+  catch(err){
+    next(new HttpError('Posts could not be fetched', 500))
+  }
+  res.status(200).json({data: allPosts})
+}
+
+const getWebinars = async(req,res,next) => {
+  let allWebinars
+  try{
+    allWebinars = await Webinar.find({})
+  }
+  catch(err){
+    next(new HttpError('Webinars could not be fetched', 500))
+  }
+  res.status(200).json({data: allWebinars})
+}
+
+const getFileController = async (req, res, next) => {
+  const { fileId, bucketName } = req.body
+  try {
+    await getFile(fileId, bucketName, res)
+  } catch (err) {
+    next(new HttpError('An error occurred while fetching the file', 500))
+  }
+}
+
 exports.userLogin = userLogin
 exports.createAccount = createAccount
 exports.newMessage = newMessage
 exports.addPosts = addPosts
 exports.deletePosts = deletePosts
-exports.getFile = getFileController
 exports.addWebinars = addWebinars
 exports.deleteWebinars = deleteWebinars
+exports.getFile = getFileController
+exports.getPosts = getPosts
+exports.getWebinars = getWebinars
